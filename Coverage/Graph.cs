@@ -36,15 +36,18 @@ namespace Coverage
         {
 
             int id;
+            public int listPosition { get; set; }
             public bool isActive { get; set; }
+            public bool explored { get; set; }
             public List<Link> links;
-
+            public double distFromSource;
             public Node(int id)
             {
                 this.id = id;
                 isActive = true;
                 links = new List<Link>();
                 Console.WriteLine("Node" + id + " created");
+                distFromSource = Double.MaxValue;
             }
 
             public int getId()
@@ -72,29 +75,33 @@ namespace Coverage
         {
 
             int num_vert = 0;
+            bool weight_generated;
             //Weight representation used for convenience
             double[,] w_matrix;
             public List<Node> nodes = new List<Node>();
 
             public Graph()
             {
+                weight_generated = false;
                 Console.WriteLine("Graph created!");
+            }
+
+            public void init()
+            {
+				//Nodes are sorted by ID number
+				nodes.Sort((Node x, Node y) => x.getId().CompareTo(y.getId()));
+				//Get number of total nodes
+				num_vert = nodes.Count;
+
+                //Helper variable listPosition after sorting
+                int c = 0;
+                foreach (var item in nodes)
+                    item.listPosition = c++;
+                 
             }
 
             public void computeWeights()
             {
-
-                //Nodes are sorted by ID number
-                nodes.Sort((Node x, Node y) => x.getId().CompareTo(y.getId()));
-
-                foreach (var item in nodes)
-                {
-                    Console.WriteLine(item.getId());
-                }
-
-                //Get number of total nodes
-                num_vert = nodes.Count;
-
                 //Only if we added every node to the list
                 if (num_vert > 0)
                 {
@@ -135,8 +142,14 @@ namespace Coverage
                 else
                 {
                     Console.WriteLine("ERROR, node list is empty");
+                    weight_generated = false;
                     return;
                 }
+                weight_generated = true;
+            }
+            public void computeWeights(double[,] matrix){
+                w_matrix = matrix;
+                weight_generated = true;
             }
 
             public void printL()
@@ -151,6 +164,42 @@ namespace Coverage
                     Console.Write("\n");
                 }   
             }
+            public double[,] getWeightMatrix()
+            {
+                return w_matrix;
+            }
+
+            public virtual Node getNodeByID(int id)
+            {
+
+                Node temp;
+                //Find the Node in list with the corresponding id
+
+                if (nodes[id].getId() == id) //lucky case
+                    temp = nodes[id];
+                else{                        //at least we tried, search over the list
+                    temp = nodes.Find((Node obj) => { return obj.getId() == id; });
+                }
+
+                return temp;
+            }
+            public List<Node> getShortestPath(Node source, Node dest){
+                var path = new List<Node>();
+                if (weight_generated)
+                {
+                    //Start looking for shortest path
+                    Dijkstra2.Dijkstra(w_matrix, source.listPosition, num_vert);
+
+
+                }
+                else
+                    Console.WriteLine("You need to call generateWeights method first!");
+
+
+                return path;
+            }
+
+           
         }//CLASS Graph
     }//NAMESPACE Navigation
 }//NAMESPACE Coverage
