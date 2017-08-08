@@ -115,7 +115,7 @@ namespace Coverage
                     Console.WriteLine("{0}\t  {1}", i, distance[i]);
             }
 
-            public static void Dijkstra(double[,] graph, int source, int verticesCount)
+            public static double[] Dijkstra(double[,] graph, int source, int verticesCount)
             {
                 double[] distance = new double[verticesCount];
                 bool[] shortestPathTreeSet = new bool[verticesCount];
@@ -143,6 +143,7 @@ namespace Coverage
                 }
 
                 Print(distance, verticesCount);
+                return distance;
             }
 
 

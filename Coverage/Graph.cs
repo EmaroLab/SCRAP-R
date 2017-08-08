@@ -188,7 +188,12 @@ namespace Coverage
                 if (weight_generated)
                 {
                     //Start looking for shortest path
-                    Dijkstra2.Dijkstra(w_matrix, source.listPosition, num_vert);
+                    double[] dist = Dijkstra2.Dijkstra(w_matrix, source.listPosition, num_vert);
+
+                    for (int i = 0; i < dist.Length ; i++)
+                    {
+                        //TODO: complete this section
+                    }
 
 
                 }
