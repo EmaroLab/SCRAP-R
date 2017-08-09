@@ -142,7 +142,6 @@ namespace Coverage
                     }
                 }
 
-                Print(distance, verticesCount);
                 return distance;
             }
 

@@ -147,8 +147,38 @@ namespace Coverage
                 }
                 weight_generated = true;
             }
-            public void computeWeights(double[,] matrix){
+            public void computeWeights(double[,] matrix,int rank){
+
+                num_vert = rank;
+
+                if (matrix.GetLength(0) != rank || matrix.GetLength(1) != rank)
+                {
+                    Console.WriteLine("ERROR: matrix must be a " + rank + "X" + rank);
+                    return;
+                }
+
                 w_matrix = matrix;
+             
+                //We need to populate node list at this point
+                 nodes.Clear();
+                for (int i = 0; i < rank; i++)
+                {
+                    var nodeTemp = new Node(i);
+                    nodeTemp.listPosition = i;
+                    nodes.Add(nodeTemp);
+                }
+                //Start linking
+                for (int i = 0; i < num_vert; i++)
+                {
+                    for (int j = 0; j < num_vert; j++)
+                    {
+                        double tempW = w_matrix[i, j];
+                        if ( tempW > 0)
+                        {
+                            nodes[i].addLink(nodes[j], tempW);
+                        }
+                    }
+                }
                 weight_generated = true;
             }
 
@@ -183,18 +213,45 @@ namespace Coverage
 
                 return temp;
             }
-            public List<Node> getShortestPath(Node source, Node dest){
-                var path = new List<Node>();
+            public LinkedList<Node> getShortestPath(int sourceId,int destId){
+                var path = new LinkedList<Node>();
+                var source = getNodeByID(sourceId);
+                var dest = getNodeByID(destId);
+                path.AddFirst(dest);
                 if (weight_generated)
                 {
                     //Start looking for shortest path
                     double[] dist = Dijkstra2.Dijkstra(w_matrix, source.listPosition, num_vert);
-
-                    for (int i = 0; i < dist.Length ; i++)
+                    //Fill nodes fields, we may need it
+                    int c = 0;
+                    foreach (var item in dist)
                     {
-                        //TODO: complete this section
+                        nodes[c].distFromSource = item;
+                        c++;
                     }
 
+                    //Traverse the tree
+                    int actualPId = dest.listPosition;
+
+                    while(actualPId != source.listPosition)
+                    {
+                        double mindist = Double.MaxValue;
+                        //Find link with lowest distance from source
+                        foreach (var item in nodes[actualPId].links)
+                        {
+                            if (item.getAdj().distFromSource < mindist)
+                            {
+                                mindist = item.getAdj().distFromSource;
+                                actualPId = item.getAdj().listPosition;
+                            }
+                        }
+                        path.AddFirst(nodes[actualPId]);
+                    }
+                    Console.WriteLine("Path IDs: ");
+                    foreach (var item in path)
+                    {
+                        Console.WriteLine(item.getId());
+                    }
 
                 }
                 else
