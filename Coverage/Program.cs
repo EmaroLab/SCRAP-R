@@ -4,31 +4,12 @@
 namespace Coverage
 {
     using Navigation;
-
-    class animale
-    {
-
-        public string nome = "animale";
-
-
-
-    }
-    class cane : animale
-    {
-
-        public new string nome = "cane";
-
-        public string verso = "bau";
-
-    }
-
     class MainClass
     {
         public static void Main(string[] args)
         {
 
             Graph g = new Graph();
-
             Node n0 = new Node(0);
             Node n1 = new Node(1);
             Node n2 = new Node(2);
@@ -76,9 +57,9 @@ namespace Coverage
             //g.printL();
             g.getShortestPath(0, 6);
 
-            animale cane = new cane();
-            
-            Console.WriteLine(cane.nome);
+            Map m = new Map(5, 5, 4.5);
+
+
 
         }
     }

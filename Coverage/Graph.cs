@@ -38,7 +38,6 @@ namespace Coverage
             int id;
             public int listPosition { get; set; }
             public bool isActive { get; set; }
-            public bool explored { get; set; }
             public List<Link> links;
             public double distFromSource;
             public Node(int id)
