@@ -34,11 +34,15 @@ namespace Coverage
         //Simple graph node
         public class Node
         {
-
+            //Node unique id set by programmer
             int id;
+            //Position in node list
             public int listPosition { get; set; }
+            //Is occupied / active ?
             public bool isActive { get; set; }
+            //Connections with other nodes
             public List<Link> links;
+            //Cost from source node
             public double distFromSource;
             public Node(int id)
             {
@@ -98,7 +102,7 @@ namespace Coverage
                     item.listPosition = c++;
                  
             }
-
+            //Generate weight matric from node list set by programmer
             public void computeWeights()
             {
                 //Only if we added every node to the list
@@ -146,6 +150,7 @@ namespace Coverage
                 }
                 weight_generated = true;
             }
+            //Generate node list from matrix given by programmer
             public void computeWeights(double[,] matrix,int rank){
 
                 num_vert = rank;
@@ -180,7 +185,7 @@ namespace Coverage
                 }
                 weight_generated = true;
             }
-
+            //Print weight matrix
             public void printL()
             {
 
@@ -197,7 +202,7 @@ namespace Coverage
             {
                 return w_matrix;
             }
-
+            //Return the node by its id
             public virtual Node getNodeByID(int id)
             {
 
@@ -212,6 +217,7 @@ namespace Coverage
 
                 return temp;
             }
+            //Get the shortest path
             public LinkedList<Node> getShortestPath(int sourceId,int destId){
                 var path = new LinkedList<Node>();
                 var source = getNodeByID(sourceId);
