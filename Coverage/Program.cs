@@ -57,8 +57,10 @@ namespace Coverage
             //g.printL();
             g.getShortestPath(0, 6);
 
-            Map m = new Map(5, 5, 4.5);
+            Map m = new Map(100, 100, 1);
+      //      m.printL();
 
+            m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
 
 
         }
