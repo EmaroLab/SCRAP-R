@@ -10,12 +10,14 @@ namespace Coverage
         {
 
             Node adj;
+            Node start;
             double weight;
-            public Link(Node adj, double weight)
+            public Link(Node start, Node adj, double weight)
             {
                 this.adj = adj;
                 this.weight = weight;
                 Console.WriteLine("Link  created");
+                this.start = start;
             }
             public Node getAdj()
             {
@@ -42,8 +44,11 @@ namespace Coverage
             public bool isActive { get; set; }
             //Connections with other nodes
             public List<Link> links;
+			//Connections with other nodes
+			public List<Link> incomingLinks;
             //Cost from source node
             public double distFromSource;
+            //Node from source
             public Node(int id)
             {
                 this.id = id;
@@ -53,7 +58,7 @@ namespace Coverage
                 distFromSource = Double.MaxValue;
             }
 
-            public int getId()
+            public int getId() 
             {
                 return id;
             }
@@ -63,8 +68,14 @@ namespace Coverage
             }
             public void addLink(Node adj, double weight)
             {
-                links.Add(new Link(adj, weight));
+                var lin = new Link(this, adj, weight);
+                links.Add(lin);
+                adj.addIncomingLink(lin);
             }
+            void addIncomingLink(Link l)
+			{
+                incomingLinks.Add(l);
+			}
             public void removeLink(int linkId)
             {
 
@@ -80,7 +91,7 @@ namespace Coverage
             int num_vert = 0;
             bool weight_generated;
             //Weight representation used for convenience
-            double[,] w_matrix;
+            protected double[,] w_matrix;
             public List<Node> nodes = new List<Node>();
 
             public Graph()
@@ -91,16 +102,19 @@ namespace Coverage
 
             public void init()
             {
-				//Nodes are sorted by ID number
-				nodes.Sort((Node x, Node y) => x.getId().CompareTo(y.getId()));
-				//Get number of total nodes
-				num_vert = nodes.Count;
+                //Nodes are sorted by ID number
+                nodes.Sort((Node x, Node y) => x.getId().CompareTo(y.getId()));
+                //Get number of total nodes
+                num_vert = nodes.Count;
 
                 //Helper variable listPosition after sorting
                 int c = 0;
                 foreach (var item in nodes)
                     item.listPosition = c++;
-                 
+
+            }
+            public int getNumVert(){
+                return num_vert;
             }
             //Generate weight matric from node list set by programmer
             public void computeWeights()
@@ -151,7 +165,8 @@ namespace Coverage
                 weight_generated = true;
             }
             //Generate node list from matrix given by programmer
-            public void computeWeights(double[,] matrix,int rank){
+            public void computeWeights(double[,] matrix, int rank)
+            {
 
                 num_vert = rank;
 
@@ -162,9 +177,9 @@ namespace Coverage
                 }
 
                 w_matrix = matrix;
-             
+
                 //We need to populate node list at this point
-                 nodes.Clear();
+                nodes.Clear();
                 for (int i = 0; i < rank; i++)
                 {
                     var nodeTemp = new Node(i);
@@ -177,7 +192,7 @@ namespace Coverage
                     for (int j = 0; j < num_vert; j++)
                     {
                         double tempW = w_matrix[i, j];
-                        if ( tempW > 0)
+                        if (tempW > 0)
                         {
                             nodes[i].addLink(nodes[j], tempW);
                         }
@@ -196,7 +211,7 @@ namespace Coverage
                         Console.Write(w_matrix[i, j] + " ");
                     }
                     Console.Write("\n");
-                }   
+                }
             }
             public double[,] getWeightMatrix()
             {
@@ -211,18 +226,20 @@ namespace Coverage
 
                 if (nodes[id].getId() == id) //lucky case
                     temp = nodes[id];
-                else{                        //at least we tried, search over the list
+                else
+                {                        //at least we tried, search over the list
                     temp = nodes.Find((Node obj) => { return obj.getId() == id; });
                 }
 
                 return temp;
             }
             //Get the shortest path
-            public LinkedList<Node> getShortestPath(int sourceId,int destId){
+            public LinkedList<Node> getShortestPath(int sourceId, int destId)
+            {
                 var path = new LinkedList<Node>();
                 var source = getNodeByID(sourceId);
                 var dest = getNodeByID(destId);
-                path.AddFirst(dest);
+
                 if (weight_generated)
                 {
                     //Start looking for shortest path
@@ -236,36 +253,37 @@ namespace Coverage
                     }
 
                     //Traverse the tree
-                    int actualPId = dest.listPosition;
-
-                    while(actualPId != source.listPosition)
-                    {
-                        double mindist = Double.MaxValue;
-                        //Find link with lowest distance from source
-                        foreach (var item in nodes[actualPId].links)
-                        {
-                            if (item.getAdj().distFromSource < mindist)
-                            {
-                                mindist = item.getAdj().distFromSource;
-                                actualPId = item.getAdj().listPosition;
-                            }
-                        }
-                        path.AddFirst(nodes[actualPId]);
-                    }
-                    Console.WriteLine("Path IDs: ");
-                    foreach (var item in path)
-                    {
-                        Console.WriteLine(item.getId());
-                    }
-
+                    path = traverse(source,dest);
                 }
                 else
                     Console.WriteLine("You need to call generateWeights method first!");
+                
+                return path;
+            }
+            public LinkedList<Node>traverse(Node source, Node dest){
+                var path = new LinkedList<Node>();
+				//Traverse the tree
+                path.AddFirst(dest);
+				int actualPId = dest.listPosition;
 
+				while (actualPId != source.listPosition)
+				{
+					double mindist = Double.MaxValue;
+					//Find link with lowest distance from source
+					foreach (var item in nodes[actualPId].links)
+					{
+						if (item.getAdj().distFromSource < mindist)
+						{
+							mindist = item.getAdj().distFromSource;
+							actualPId = item.getAdj().listPosition;
+						}
+					}
+					path.AddFirst(nodes[actualPId]);
+				}
 
                 return path;
             }
-
+        
            
         }//CLASS Graph
     }//NAMESPACE Navigation

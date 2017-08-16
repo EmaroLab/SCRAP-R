@@ -54,8 +54,8 @@ namespace Coverage
         public class Map : Graph
         {
 
-            int rows;
-            int cols;
+            public int rows { get; }
+            public int cols { get; }
             double resolution;
             //False when obstacle is present
             //bool[,] obstMask;
@@ -204,9 +204,22 @@ namespace Coverage
                         }
 
                     }
-					
 
 				}
+
+            }
+            public void updateWeights(double alpha){
+
+                foreach (var node in nodes)
+                {
+                    foreach (var link in node.links){
+                        NavNode n = (NavNode)link.getAdj();
+                        var newWeight = n.nvisited + alpha;
+                        link.setWeight(newWeight);
+                        w_matrix[node.getId(), n.getId()] = newWeight;
+                    }
+                }
+
 
             }
             //returns the cell x and y from the spatial point

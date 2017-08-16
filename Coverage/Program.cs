@@ -55,12 +55,13 @@ namespace Coverage
             g.init();
             g.computeWeights(L, 8);
             //g.printL();
-            g.getShortestPath(0, 6);
+            g.getShortestPath(0, 0);
 
-            Map m = new Map(100, 100, 1);
-      //      m.printL();
+            Map m = new Map(5, 5, 1);
 
-            m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
+            var asc = new DualAscent(m,5);
+            //m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
+            asc.run(0,5);
 
 
         }

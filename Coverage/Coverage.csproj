@@ -37,6 +37,7 @@
     <Compile Include="Graph.cs" />
     <Compile Include="Dijkstra.cs" />
     <Compile Include="Map.cs" />
+    <Compile Include="DualAscent.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
