@@ -53,17 +53,63 @@ namespace Coverage
             };
             // d.Run();
             g.init();
+
             g.computeWeights(L, 8);
             //g.printL();
             g.getShortestPath(0, 0);
 
             Map m = new Map(5, 5, 1);
-
-            var asc = new DualAscent(m,5);
+            m.addObstacle(1, 1);
+            m.addObstacle(3, 2);
+            m.addObstacle(2, 1);
+            m.addObstacle(1, 0);
+            m.addObstacle(1, 2);
+            m.init();
+            var asc = new DualAscent(m,3);
             //m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
-            asc.run(0,5);
+            var s = new int[2];
+            s[0] = 0;
+            s[1] = 0;
+			var t = new int[2];
+            t[0] = 4;
+            t[1] = 0;
+            var p = asc.run(m.getNodeIdFromCell(s[0], s[1]), m.getNodeIdFromCell(t[0], t[1]));
 
 
+            var stamp = new int[m.rows, m.cols];
+            for (int r = 0; r < m.rows; r++)
+            {
+                for (int c = 0; c < m.cols; c++)
+                {
+                    stamp[r, c] = 0;
+                    if(!m.getNodeByID(m.getNodeIdFromCell(r,c)).isActive)
+                        stamp[r, c] = 9;
+                        
+                }
+            }
+			foreach (NavNode item in p)
+			{
+                stamp[item.xCell, item.yCell] = 1;
+			}
+			for (int r = 0; r < m.rows; r++)
+			{
+				for (int c = 0; c < m.cols; c++)
+				{
+                    Console.Write(stamp[r, c] + " " );
+				}
+                Console.WriteLine("");
+			}
+            /*
+			m.printL();
+			for (int r = 0; r < m.rows; r++)
+			{
+				for (int c = 0; c < m.cols; c++)
+				{
+                    Console.Write(m.getNodeByID(m.getNodeIdFromCell(r,c)).distFromSource + " ");
+				}
+				Console.WriteLine("");
+			}
+*/
         }
     }
 }

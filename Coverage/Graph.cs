@@ -4,7 +4,13 @@ namespace Coverage
 {
     namespace Navigation
     {
+        static class Param
+        {
 
+            public static bool verbose = false;
+
+
+        }
         //Basic class for link representation between nodes
         public class Link
         {
@@ -12,16 +18,22 @@ namespace Coverage
             Node adj;
             Node start;
             double weight;
+
             public Link(Node start, Node adj, double weight)
             {
                 this.adj = adj;
                 this.weight = weight;
-                Console.WriteLine("Link  created");
+                if (Param.verbose)
+                    Console.WriteLine("Link  created");
                 this.start = start;
             }
             public Node getAdj()
             {
                 return adj;
+            }
+            public Node getOwnerNode()
+            {
+                return start;
             }
             public double getWeight()
             {
@@ -44,21 +56,25 @@ namespace Coverage
             public bool isActive { get; set; }
             //Connections with other nodes
             public List<Link> links;
-			//Connections with other nodes
-			public List<Link> incomingLinks;
+            //Incoming connections 
+            public List<Link> incomingLinks;
             //Cost from source node
             public double distFromSource;
+            //Previous Node ID for optimal path
+            public int prevNode;
             //Node from source
             public Node(int id)
             {
                 this.id = id;
                 isActive = true;
                 links = new List<Link>();
-                Console.WriteLine("Node" + id + " created");
+                incomingLinks = new List<Link>();
+                //Console.WriteLine("Node" + id + " created");
                 distFromSource = Double.MaxValue;
+                prevNode = -1;
             }
 
-            public int getId() 
+            public int getId()
             {
                 return id;
             }
@@ -72,10 +88,12 @@ namespace Coverage
                 links.Add(lin);
                 adj.addIncomingLink(lin);
             }
-            void addIncomingLink(Link l)
-			{
+            public void addIncomingLink(Link l)
+            {
+
                 incomingLinks.Add(l);
-			}
+
+            }
             public void removeLink(int linkId)
             {
 
@@ -97,10 +115,11 @@ namespace Coverage
             public Graph()
             {
                 weight_generated = false;
-                Console.WriteLine("Graph created!");
+                if (Param.verbose)
+                    Console.WriteLine("Graph created!");
             }
 
-            public void init()
+            public virtual void init()
             {
                 //Nodes are sorted by ID number
                 nodes.Sort((Node x, Node y) => x.getId().CompareTo(y.getId()));
@@ -111,9 +130,11 @@ namespace Coverage
                 int c = 0;
                 foreach (var item in nodes)
                     item.listPosition = c++;
+                w_matrix = new double[num_vert, num_vert];
 
             }
-            public int getNumVert(){
+            public int getNumVert()
+            {
                 return num_vert;
             }
             //Generate weight matric from node list set by programmer
@@ -127,28 +148,31 @@ namespace Coverage
                     //Fill weighted matrix
                     for (int i = 0; i < num_vert; i++)
                     {
-                        for (int j = 0; j < num_vert; j++)
+
                         {
-                            //Set diag to zero
-                            if (i == j)
-                                w_matrix[i, j] = -1;
-                            else
+                            for (int j = 0; j < num_vert; j++)
                             {
-                                //Unreachable by default
-                                w_matrix[i, j] = -1;
-
-                                //Check possible links
-                                if (nodes[i].links.Count > 0)
+                                //Set diag to zero
+                                if (i == j)
+                                    w_matrix[i, j] = -1;
+                                else
                                 {
-                                    foreach (var l in nodes[i].links)
-                                    {
+                                    //Unreachable by default
+                                    w_matrix[i, j] = -1;
 
-                                        if (l.getAdj().getId() == nodes[j].getId())
+                                    //Check possible links
+                                    if (nodes[i].links.Count > 0)
+                                    {
+                                        foreach (var l in nodes[i].links)
                                         {
 
-                                            Console.WriteLine("Node " + nodes[i].getId() + " is connected to node: " + nodes[j].getId() + " with a weight of: " + l.getWeight());
-                                            w_matrix[i, j] = l.getWeight();
+                                            if (l.getAdj().getId() == nodes[j].getId() && l.getAdj().isActive)
+                                            {
+                                                if (Param.verbose)
+                                                    Console.WriteLine("Node " + nodes[i].getId() + " is connected to node: " + nodes[j].getId() + " with a weight of: " + l.getWeight());
+                                                w_matrix[i, j] = l.getWeight();
 
+                                            }
                                         }
                                     }
                                 }
@@ -243,48 +267,45 @@ namespace Coverage
                 if (weight_generated)
                 {
                     //Start looking for shortest path
-                    double[] dist = Dijkstra2.Dijkstra(w_matrix, source.listPosition, num_vert);
+                    double[,] dist = Dijkstra2.Dijkstra(w_matrix, source.listPosition, num_vert);
                     //Fill nodes fields, we may need it
-                    int c = 0;
-                    foreach (var item in dist)
+                    for (int i = 0; i < num_vert; i++)
                     {
-                        nodes[c].distFromSource = item;
-                        c++;
+                            nodes[i].distFromSource = dist[i, 0];
+                            nodes[i].prevNode = (int)dist[i, 1];
                     }
-
+                    /*
+                    for (int i = 0; i < num_vert; i++)
+                    {
+                        Console.WriteLine(dist[i, 0] + " " + dist[i, 1]);
+                    }
+                    */
                     //Traverse the tree
-                    path = traverse(source,dest);
+                    path = traverse(source, dest);
                 }
                 else
                     Console.WriteLine("You need to call generateWeights method first!");
-                
+
                 return path;
             }
-            public LinkedList<Node>traverse(Node source, Node dest){
+            //Find optimalpath from Dijkstra Tree, scans from target to source (it includes start and destination in the path)
+            public LinkedList<Node> traverse(Node source, Node dest)
+            {
                 var path = new LinkedList<Node>();
-				//Traverse the tree
+                //Traverse the tree
                 path.AddFirst(dest);
-				int actualPId = dest.listPosition;
+                int actualPId = dest.listPosition;
 
-				while (actualPId != source.listPosition)
-				{
-					double mindist = Double.MaxValue;
-					//Find link with lowest distance from source
-					foreach (var item in nodes[actualPId].links)
-					{
-						if (item.getAdj().distFromSource < mindist)
-						{
-							mindist = item.getAdj().distFromSource;
-							actualPId = item.getAdj().listPosition;
-						}
-					}
-					path.AddFirst(nodes[actualPId]);
-				}
+                while (actualPId != source.listPosition)
+                {
+                    actualPId = nodes[actualPId].prevNode;
+                    path.AddFirst(nodes[actualPId]);
 
+                }
                 return path;
             }
-        
-           
-        }//CLASS Graph
-    }//NAMESPACE Navigation
-}//NAMESPACE Coverage
+
+
+            }//CLASS Graph
+        }//NAMESPACE Navigation
+    }//NAMESPACE Coverage

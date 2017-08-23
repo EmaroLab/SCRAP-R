@@ -90,16 +90,16 @@ namespace Coverage
 
         public class Dijkstra2
         {
-            private static int MinimumDistance(double[] distance, bool[] shortestPathTreeSet, int verticesCount)
+            private static int MinimumDistance(double[,] distance, bool[] shortestPathTreeSet, int verticesCount)
             {
                 double min = double.MaxValue;
                 int minIndex = 0;
 
                 for (int v = 0; v < verticesCount; ++v)
                 {
-                    if (shortestPathTreeSet[v] == false && distance[v] <= min)
+                    if (shortestPathTreeSet[v] == false && distance[v,0] <= min)
                     {
-                        min = distance[v];
+                        min = distance[v,0];
                         minIndex = v;
                     }
                 }
@@ -115,18 +115,18 @@ namespace Coverage
                     Console.WriteLine("{0}\t  {1}", i, distance[i]);
             }
 
-            public static double[] Dijkstra(double[,] graph, int source, int verticesCount)
+            public static double[,] Dijkstra(double[,] graph, int source, int verticesCount)
             {
-                double[] distance = new double[verticesCount];
+                double[,] distance = new double[verticesCount,2];
                 bool[] shortestPathTreeSet = new bool[verticesCount];
 
                 for (int i = 0; i < verticesCount; ++i)
                 {
-                    distance[i] = int.MaxValue;
+                    distance[i,0] = int.MaxValue;
                     shortestPathTreeSet[i] = false;
                 }
 
-                distance[source] = 0;
+                distance[source,0] = 0;
 
                 for (int count = 0; count < verticesCount - 1; ++count)
                 {
@@ -135,10 +135,14 @@ namespace Coverage
 
                     for (int v = 0; v < verticesCount; ++v)
                     {
-                        if (graph[u, v] == -1)
-                            graph[u, v] = 0;
-                        if (!shortestPathTreeSet[v] && Convert.ToBoolean(graph[u, v]) && distance[u] != int.MaxValue && distance[u] + graph[u, v] < distance[v])
-                            distance[v] = distance[u] + graph[u, v];
+                        var res = graph[u, v] != -1;
+                        if (!shortestPathTreeSet[v] && res && distance[u,0] != int.MaxValue && distance[u,0] + graph[u, v] < distance[v,0])
+                        {
+                            distance[v,0] = distance[u,0] + graph[u, v];
+                            //Store predecessors
+                            distance[v, 1] = u;
+                        }
+
                     }
                 }
 

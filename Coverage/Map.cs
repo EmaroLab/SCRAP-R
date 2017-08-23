@@ -7,6 +7,10 @@ namespace Coverage
 
         public class CostFunctions{
 
+            public static int rows = 5;
+            public static int cols = 5;
+            public static int res = 1;
+
             public static double vehicleAction = 2;
             public static double alpha = 0;
 
@@ -14,10 +18,36 @@ namespace Coverage
                 double sqrSum = Math.Pow(t.yCoord - s.yCoord, 2) + Math.Pow(t.xCoord - s.xCoord, 2);
                 return Math.Sqrt(sqrSum);
             }
-			public static double commCost(NavNode s, NavNode t, int nInsideObst = 0)
+			public static double commCost(NavNode s, NavNode t, double resolution, int r, int c)
 			{
-                //TODO: define it better
-                return 0.8 * euclideanDist(s,t) + nInsideObst / 10;    			
+
+				//Bad way to check if line intersects a cell but fast to implement.
+                double euclDistToTarget = euclideanDist(s, t);
+				var samplingN = resolution * 10;
+				var delta = vehicleAction / samplingN;
+				var versor = new double[2];
+				versor[0] = (t.xCoord - s.xCoord) / euclDistToTarget;
+				versor[1] = (t.yCoord - s.yCoord) / euclDistToTarget;
+
+				//Sample the line and count how many points lie inside an obstacle
+				int pInside = 0;
+				for (int i = 0; i < samplingN; i++)
+				{
+                    
+                    double x = versor[0] * delta * i + s.xCoord;
+					double y = versor[1] * delta * i + s.yCoord;
+
+                    int xC = Map.getCellFromCoord(x, y, resolution, r, c)[0];
+					int yC = Map.getCellFromCoord(x, y, resolution, r, c)[1];
+					
+                    //Check if point lies inside an obstacle. We use mask since is faster than getting a node
+					if (!getNodeByID(getNodeIdFromCell(xC, yC)).isActive)
+					{
+						pInside++;
+					}
+
+				}
+                return 1 * euclideanDist(s,t) + 20 * nInsideObst / 10.0;    			
             }
 
         }
@@ -29,7 +59,7 @@ namespace Coverage
 
         public class NavNode : Node {
 
-            public double xCoord { get; set; }
+            public double xCoord { get ; set; }
             public double yCoord { get; set; }
 
             public int xCell { get; set; }
@@ -83,10 +113,12 @@ namespace Coverage
                 */
                 //Fill the node list
                 generateNodes();
-                //Generate weight matrix as Dijkstra input
-                initLinks();
-                computeWeights();
+            }
 
+            public override void init(){
+				//Generate weight matrix as Dijkstra input
+				initLinks();
+				computeWeights();
             }
 
             void generateNodes()
@@ -98,29 +130,33 @@ namespace Coverage
                     {
                         var tempNode = new NavNode(id++, i, j); 
                         tempNode.setPosition(resolution * (i + 0.5),resolution * (j + 0.5));
-                       // tempNode.isActive = obstMask[i, j];
                         nodes.Add(tempNode);
                     }
                 }
-                init();
+                base.init();
             }
             //Set a cell to be an obstacle.
             public void addObstacle(int xCell,int yCell){
                 getNodeByID(getNodeIdFromCell(xCell, yCell)).isActive = false;
-               // obstMask[xCell, yCell] = false;
+               
+                Console.WriteLine("Obstacle added in node " + getNodeIdFromCell(xCell, yCell));
+                //Update weight matrix
+                for (int i = 0; i < getNumVert(); i++)
+                {
+                    w_matrix[getNodeIdFromCell(xCell, yCell), i] = -1;
+                    w_matrix[i, getNodeIdFromCell(xCell, yCell)] = -1;
+                }
             }
             //Links creation based on obstacles, vehicle action and initial weights
             void initLinks(){
-
-
-                //Bad way to check if line intersects a cell but fast to implement. 
-                var samplingN = resolution * 10;
-                var delta = vehicleAction / samplingN;
-
+				var samplingN = resolution * 10;
+				var delta = vehicleAction / samplingN;
                 foreach (var item in nodes)
                 {
-                    if (item is NavNode)
+                    if (item is NavNode && item.isActive)
 					{
+
+
                         //Find max y and x respect to vehicle action
                         int maxX;
                         int maxY;
@@ -159,41 +195,35 @@ namespace Coverage
 
                                 NavNode target = (NavNode)getNodeByID(getNodeIdFromCell(i, j));
                                 double euclDistToTarget = CostFunctions.euclideanDist((NavNode)item, target);
-                                bool check = (item.getId() != target.getId() && target.isActive && (euclDistToTarget <= vehicleAction));
+                                bool check = ((item.getId() != target.getId()) && (target.isActive) && ((euclDistToTarget <= vehicleAction)));
                                 if (check)
                                 {
+                                    //Target node is not an obstacle and is reachable, check if there is an obstacle in the middle
 
-                                    //Target node is not an obstacle and is reachable, check if there is an obstacle in the middle.
-                                    double maxx = Math.Max(((NavNode)item).xCell, target.xCell);
-                                    double minx = Math.Min(((NavNode)item).xCell, target.xCoord);
-                                    double maxy = Math.Max(((NavNode)item).yCell, target.yCell);
-                                    double miny = Math.Min(((NavNode)item).yCell, target.yCell);
-
-                                    //Extrapolate line params
-                                    double m = (target.yCoord - ((NavNode)item).yCoord) / (target.xCoord - ((NavNode)item).xCoord);
-                                    double q = ((NavNode)item).yCoord - m * ((NavNode)item).xCoord;
                                     var versor = new double[2];
                                     versor[0] = (target.xCoord - ((NavNode)item).xCoord) / euclDistToTarget;
                                     versor[1] = (target.yCoord - ((NavNode)item).yCoord) / euclDistToTarget;
 
                                     //Sample the line and count how many points lie inside an obstacle
-
                                     int pInside = 0;
                                     for (int s = 0; s < samplingN; s++)
                                     {
+
                                         double x = versor[0] * delta * s + ((NavNode)item).xCoord;
                                         double y = versor[1] * delta * s + ((NavNode)item).yCoord;
-
+                                        int xC = getCellFromCoord(x, y)[0];
+                                        int yC = getCellFromCoord(x, y)[1];
                                         //Check if point lies inside an obstacle. We use mask since is faster than getting a node
-
-                                        if (getNodeByID(getNodeIdFromCell(getCellFromCoord(x,y)[0],getCellFromCoord(x,y)[1])).isActive)
+                                        if (!getNodeByID(getNodeIdFromCell(xC, yC)).isActive)
+                                        {
                                             pInside++;
+                                        }
                                     }
-
+                                    //TODO: find a smart way to manage weights
                                     //choose weights
                                     int count = target.nvisited;
                                     double alpha = CostFunctions.alpha;
-                                    double comm = CostFunctions.commCost((NavNode)item, target);
+                                    double comm = CostFunctions.commCost((NavNode)item, target, p);
                                     double W = count + comm + alpha;
                                     // And finally, link
                                     item.addLink(target, W);
@@ -212,23 +242,22 @@ namespace Coverage
 
                 foreach (var node in nodes)
                 {
-                    foreach (var link in node.links){
-                        NavNode n = (NavNode)link.getAdj();
-                        var newWeight = n.nvisited + alpha;
-                        link.setWeight(newWeight);
-                        w_matrix[node.getId(), n.getId()] = newWeight;
+                    if (node.isActive)
+                    {
+                        foreach (var link in node.links)
+                        {
+                            NavNode n = (NavNode)link.getAdj();
+                            var newWeight = link.getWeight() + n.nvisited + alpha;
+                            link.setWeight(newWeight);
+                           // w_matrix[node.getId(), n.getId()] = newWeight;
+                        }
                     }
                 }
-
+                computeWeights();
 
             }
             //returns the cell x and y from the spatial point
             public int[] getCellFromCoord(double xCoord, double yCoord){
-
-                if (xCoord > rows * resolution || yCoord > cols * resolution || xCoord < 0 || yCoord < 0)
-                {
-                    Console.WriteLine("ERROR: coordinates outside map space");
-                }
 
                 var t = new int[2];
                 double x;
@@ -255,9 +284,38 @@ namespace Coverage
                 t[0] = (int)x;
 				t[1] = (int)y;
 
-
-
                 return t;
+
+			}
+			public static int[] getCellFromCoord(double xCoord, double yCoord,double resolution,int rows,int cols)
+			{
+
+				var t = new int[2];
+				double x;
+				double y;
+
+				if (Math.Abs(xCoord % resolution) <= Double.Epsilon)
+					x = (xCoord / resolution) - 1;
+				else
+					x = (xCoord / resolution);
+
+				if (Math.Abs(yCoord % resolution) <= Double.Epsilon)
+					y = (yCoord / resolution) - 1;
+				else
+					y = (yCoord / resolution);
+
+				if (x < 0)
+					x = 0;
+				if (y < 0)
+					y = 0;
+				if (x > rows - 1)
+					x = rows - 1;
+				if (y > cols - 1)
+					y = cols - 1;
+				t[0] = (int)x;
+				t[1] = (int)y;
+
+				return t;
 
 			}
             //returns cell center of mass from x and y

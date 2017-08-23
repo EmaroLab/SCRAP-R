@@ -16,53 +16,102 @@ namespace Coverage
                 map = m;
                 alpha_actual = CostFunctions.alpha;
                 this.n_vehicles = n_vehicles;
-                eps_min = 0;
+                eps_min = Double.MaxValue;
+
             }
             public void setNVehicles(int n){
                 n_vehicles = n;
             }
 
-            //Dual ascent algorithm here
+            //Dual ascent algorithm here, return empty list if it fails
             public LinkedList<Node> run(int source_id, int target_id)
             {
                 //Init stuctures
-                var qv = new double[map.getNumVert(),2];
-
+                var qy = new double[map.getNumVert(),2];
+                var shorterLinks = new List<Link>();
                 bool done = false;
-
-                var path = map.getShortestPath(source_id, target_id);
-                if (path.Count <= n_vehicles)
-                  //  done = true;
-
+                var path = new LinkedList<Node>();
+                path = map.getShortestPath(source_id, target_id);
+				if (path.Count - 2 <= n_vehicles)
+					done = true;
+                /*
+                foreach (var item in path)
+				{
+					Console.WriteLine(item.getId());
+				}
+                Console.WriteLine("***");
+*/             // map.printL();
                 while(!done)
-                {
-
-                    //Calculate qn,yn
-                    int i = 0;
-                    foreach (var item in map.nodes)
+		        {
+                    
+                    path = map.getShortestPath(source_id, target_id);
+                    if (path.Count - 2 <= n_vehicles)
                     {
-                        var path_temp = map.traverse(map.getNodeByID(source_id), item);
-                        var hops = path_temp.Count - 2;
-                        if (hops < 0)
+                        done = true;
+                        break;
+                    }
+                    Console.WriteLine(done);
+                    foreach (var item in path)
+					{
+						Console.WriteLine(item.getId());
+					}
+					
+					Console.WriteLine("***");
+	                //Calculate qn,yn
+                    int i = 0;		                    
+                    foreach (var item in map.nodes)		               
+                    {	                        	                      	                     
+                        var path_temp = map.traverse(map.getNodeByID(source_id), item);             
+                        var hops = path_temp.Count - 1 ;		                     
+                        if (hops < 0)		                     
                             hops = 0;
-                        qv[i, 0] = hops;
-                        qv[i, 1] = item.distFromSource;
-                        i++;
+		                      
+                        qy[item.getId(), 0] = hops;		                     
+                        qy[item.getId(), 1] = item.distFromSource;
+                        i++;		                   
                     }
-                    //Check links ???
-
-
-                    for (int it = 0; it < map.rows; it++)
+                    //Check for shorter links 
+                   
+                    bool shorterPathFound = false;
+                    foreach (var node in map.nodes)
                     {
-                            for (int j = 0; j < map.cols; j++)
-                            {
-                                Console.Write(qv[map.getNodeIdFromCell(it,j),1] + " ");
+                        foreach (var link in node.links)
+                        {
+                            int n = node.getId();
+                            int n_p = link.getAdj().getId();
+                            //q_n [n'] > q_n[n] + 1
+                            //Debug
+                            double qnp = qy[n_p, 0];
+                            double qn = qy[n, 0];
+                            bool check = qnp > qn + 1;
+
+                            if(check){
+                                shorterPathFound = true;
+                                double eps = (qy[n,1] + link.getWeight() - qy[n_p,1]) / (qy[n_p,0] - (qy[n,0] + 1));
+                                if (eps < eps_min)
+                                    eps_min = eps;
+
                             }
-                        Console.WriteLine("\n");
+                        }
                     }
 
-                    done = true;
+                    //See if we found a better path, otherwise return an empty list
+                    if (!shorterPathFound)
+                    {
+                        done = true;
+                        path.Clear();
+                        Console.WriteLine("Path not found");
+                       // return path;
+
+                    }
+                  
+                    alpha_actual += eps_min;
+                    Console.WriteLine(alpha_actual);
+                    map.updateWeights(alpha_actual);
+                    //map.printL();
                 }
+				//Calculated path;
+
                 return path;
             }
         }//CLASS DualAscent
