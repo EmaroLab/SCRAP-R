@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Collections.Generic;
 namespace Coverage
 {
     namespace Navigation
@@ -7,18 +7,20 @@ namespace Coverage
 
         public class CostFunctions{
 
-            public static int rows = 5;
-            public static int cols = 5;
-            public static int res = 1;
-
             public static double vehicleAction = 2;
             public static double alpha = 0;
+
+            //Reference to Map
+            Map map;
+            void setMap(Map m){
+                map = m;
+            }
 
             public static double euclideanDist(NavNode s, NavNode t){
                 double sqrSum = Math.Pow(t.yCoord - s.yCoord, 2) + Math.Pow(t.xCoord - s.xCoord, 2);
                 return Math.Sqrt(sqrSum);
             }
-			public static double commCost(NavNode s, NavNode t, double resolution, int r, int c)
+			public static double commCost(NavNode s, NavNode t, double resolution, int r, int c , List<Node> nodes)
 			{
 
 				//Bad way to check if line intersects a cell but fast to implement.
@@ -39,15 +41,20 @@ namespace Coverage
 
                     int xC = Map.getCellFromCoord(x, y, resolution, r, c)[0];
 					int yC = Map.getCellFromCoord(x, y, resolution, r, c)[1];
+                    //Clamp xC and yC
+                    if (xC >= r)
+                        xC = r - 1;
+					if (yC >= c)
+						yC = c - 1;
 					
-                    //Check if point lies inside an obstacle. We use mask since is faster than getting a node
-					if (!getNodeByID(getNodeIdFromCell(xC, yC)).isActive)
+                    //Check if point lies inside an obstacle. 
+                    if (!Graph.getNodeByID(Map.getNodeIdFromCell(xC,yC,c),nodes).isActive)
 					{
 						pInside++;
 					}
 
 				}
-                return 1 * euclideanDist(s,t) + 20 * nInsideObst / 10.0;    			
+                return 1 * euclideanDist(s,t) + 2* pInside / 10.0;    			
             }
 
         }
@@ -198,32 +205,12 @@ namespace Coverage
                                 bool check = ((item.getId() != target.getId()) && (target.isActive) && ((euclDistToTarget <= vehicleAction)));
                                 if (check)
                                 {
-                                    //Target node is not an obstacle and is reachable, check if there is an obstacle in the middle
-
-                                    var versor = new double[2];
-                                    versor[0] = (target.xCoord - ((NavNode)item).xCoord) / euclDistToTarget;
-                                    versor[1] = (target.yCoord - ((NavNode)item).yCoord) / euclDistToTarget;
-
-                                    //Sample the line and count how many points lie inside an obstacle
-                                    int pInside = 0;
-                                    for (int s = 0; s < samplingN; s++)
-                                    {
-
-                                        double x = versor[0] * delta * s + ((NavNode)item).xCoord;
-                                        double y = versor[1] * delta * s + ((NavNode)item).yCoord;
-                                        int xC = getCellFromCoord(x, y)[0];
-                                        int yC = getCellFromCoord(x, y)[1];
-                                        //Check if point lies inside an obstacle. We use mask since is faster than getting a node
-                                        if (!getNodeByID(getNodeIdFromCell(xC, yC)).isActive)
-                                        {
-                                            pInside++;
-                                        }
-                                    }
+                                   
                                     //TODO: find a smart way to manage weights
-                                    //choose weights
+                                    //choose initial weights
                                     int count = target.nvisited;
                                     double alpha = CostFunctions.alpha;
-                                    double comm = CostFunctions.commCost((NavNode)item, target, p);
+                                    double comm = CostFunctions.commCost((NavNode)item, target, resolution, rows, cols, nodes);
                                     double W = count + comm + alpha;
                                     // And finally, link
                                     item.addLink(target, W);
@@ -246,10 +233,11 @@ namespace Coverage
                     {
                         foreach (var link in node.links)
                         {
-                            NavNode n = (NavNode)link.getAdj();
-                            var newWeight = link.getWeight() + n.nvisited + alpha;
+                            NavNode target = (NavNode)link.getAdj();
+                            double comm = CostFunctions.commCost((NavNode)node, target, resolution, rows, cols, nodes);
+                            var newWeight = comm + target.nvisited + alpha;
                             link.setWeight(newWeight);
-                           // w_matrix[node.getId(), n.getId()] = newWeight;
+                           
                         }
                     }
                 }
@@ -287,7 +275,7 @@ namespace Coverage
                 return t;
 
 			}
-			public static int[] getCellFromCoord(double xCoord, double yCoord,double resolution,int rows,int cols)
+			public static int[] getCellFromCoord(double xCoord, double yCoord,double resolution ,int rows,int cols)
 			{
 
 				var t = new int[2];
@@ -331,6 +319,11 @@ namespace Coverage
             public int  getNodeIdFromCell(int xCell, int yCell){
                 return xCell*cols + yCell;
             }
+            //Static version
+			public static int getNodeIdFromCell(int xCell, int yCell, int c)
+			{
+				return xCell * c + yCell;
+			}
 
         }//Class Map
     }//Namespace Navigation

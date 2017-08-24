@@ -257,6 +257,22 @@ namespace Coverage
 
                 return temp;
             }
+            //Static version (used by Cost function static class)
+            public static Node getNodeByID(int id, List<Node> n)
+			{
+
+				Node temp;
+				//Find the Node in list with the corresponding id
+
+				if (n[id].getId() == id) //lucky case
+					temp = n[id];
+				else
+				{                        //at least we tried, search over the list
+					temp = n.Find((Node obj) => { return obj.getId() == id; });
+				}
+
+				return temp;
+			}
             //Get the shortest path
             public LinkedList<Node> getShortestPath(int sourceId, int destId)
             {

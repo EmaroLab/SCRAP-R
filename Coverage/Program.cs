@@ -58,12 +58,15 @@ namespace Coverage
             //g.printL();
             g.getShortestPath(0, 0);
 
-            Map m = new Map(5, 5, 1);
+
+
+            //Dual ascent test
+            Map m = new Map(15, 15, 1);
             m.addObstacle(1, 1);
-            m.addObstacle(3, 2);
-            m.addObstacle(2, 1);
+           // m.addObstacle(3, 2);
+           // m.addObstacle(2, 1);
             m.addObstacle(1, 0);
-            m.addObstacle(1, 2);
+            //m.addObstacle(1, 2);
             m.init();
             var asc = new DualAscent(m,3);
             //m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
@@ -75,7 +78,7 @@ namespace Coverage
             t[1] = 0;
             var p = asc.run(m.getNodeIdFromCell(s[0], s[1]), m.getNodeIdFromCell(t[0], t[1]));
 
-
+            //Print map
             var stamp = new int[m.rows, m.cols];
             for (int r = 0; r < m.rows; r++)
             {

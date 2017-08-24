@@ -47,6 +47,11 @@ namespace Coverage
                     path = map.getShortestPath(source_id, target_id);
                     if (path.Count - 2 <= n_vehicles)
                     {
+						Console.WriteLine("Path found!");
+						foreach (var item in path)
+						{
+							Console.WriteLine(item.getId());
+						}
                         done = true;
                         break;
                     }
