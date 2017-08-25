@@ -54,7 +54,7 @@ namespace Coverage
 					}
 
 				}
-                return 1 * euclideanDist(s,t) + 2* pInside / 10.0;    			
+                return 1 * euclideanDist(s,t) + 20* pInside / 10.0;    			
             }
 
         }
@@ -156,8 +156,7 @@ namespace Coverage
             }
             //Links creation based on obstacles, vehicle action and initial weights
             void initLinks(){
-				var samplingN = resolution * 10;
-				var delta = vehicleAction / samplingN;
+
                 foreach (var item in nodes)
                 {
                     if (item is NavNode && item.isActive)
@@ -193,7 +192,7 @@ namespace Coverage
 						if (minY < 0)
 							minY = 0;
 
-                        //Connect nodes depending on vehicle action and obstacles. Initial weight mased on initial cost function params
+                        //Connect nodes depending on vehicle action and obstacles. Initial weight based on initial cost function params
                         for (int i = minX; i <= maxX; i++)
                         {
                             for (int j = minY; j <= maxY; j++)
@@ -225,7 +224,7 @@ namespace Coverage
 				}
 
             }
-            public void updateWeights(double alpha){
+            public void updateWeights(double alpha = 0){
 
                 foreach (var node in nodes)
                 {

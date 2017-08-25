@@ -22,13 +22,48 @@ namespace Coverage
             public void setNVehicles(int n){
                 n_vehicles = n;
             }
+            //Checks if current link is in a general path
+            bool isLinkInPath(LinkedList<Node> path, Link link){
+
+                int id_s = link.getOwnerNode().getId();
+                int id_t = link.getAdj().getId();
+
+                bool sourceFound = false;
+
+                List<int> tempId = new List<int>();
+                foreach (var item in path)
+                {
+                    if(sourceFound){
+                        if (tempId.Exists((obj) => { return obj == id_t; }))
+                            return true;
+                    }
+
+                    //Link starts in this node
+                    if (item.getId() == id_s)
+                    {
+                        sourceFound = true;
+                        tempId.Clear();
+                        foreach (var testLink in item.links)
+                        {
+                            //Store adjoint ids for next iteration
+                            tempId.Add(testLink.getAdj().getId());
+                        }
+
+                    }
+                    else
+                        sourceFound = false;
+                    
+                }
+                //no mathing link
+                return false;;
+            }
+
 
             //Dual ascent algorithm here, return empty list if it fails
             public LinkedList<Node> run(int source_id, int target_id)
             {
                 //Init stuctures
                 var qy = new double[map.getNumVert(),2];
-                var shorterLinks = new List<Link>();
                 bool done = false;
                 var path = new LinkedList<Node>();
                 path = map.getShortestPath(source_id, target_id);
@@ -82,20 +117,29 @@ namespace Coverage
                     {
                         foreach (var link in node.links)
                         {
-                            int n = node.getId();
-                            int n_p = link.getAdj().getId();
-                            //q_n [n'] > q_n[n] + 1
-                            //Debug
-                            double qnp = qy[n_p, 0];
-                            double qn = qy[n, 0];
-                            bool check = qnp > qn + 1;
+                            
+                            if (!isLinkInPath(path, link) || true)
+                            {
+                                int n = node.getId();
+                                int n_p = link.getAdj().getId();
+                                //q_n [n'] > q_n[n] + 1
+                                //Debug
+                                double qnp = qy[n_p, 0];
+                                double qn = qy[n, 0];
+                                bool check = qnp > qn + 1;
 
-                            if(check){
-                                shorterPathFound = true;
-                                double eps = (qy[n,1] + link.getWeight() - qy[n_p,1]) / (qy[n_p,0] - (qy[n,0] + 1));
-                                if (eps < eps_min)
-                                    eps_min = eps;
-
+                                if (check)
+                                {
+                                    shorterPathFound = true;
+                                    double eps = (qy[n, 1] + link.getWeight() - qy[n_p, 1]) / (qy[n_p, 0] - (qy[n, 0] + 1));
+                                    Console.WriteLine(eps < eps_min && eps > 0);
+                                    if (eps < eps_min  && eps > 0.00001) //Magic number, avoid to get stuck with eps very low
+                                        eps_min = eps;
+                                    Console.WriteLine("eps: " + eps + " EpsMin: " + eps_min);
+                             
+                                        
+                                    
+                                }
                             }
                         }
                     }
@@ -106,12 +150,12 @@ namespace Coverage
                         done = true;
                         path.Clear();
                         Console.WriteLine("Path not found");
-                       // return path;
+                        return path;
 
                     }
                   
                     alpha_actual += eps_min;
-                    Console.WriteLine(alpha_actual);
+
                     map.updateWeights(alpha_actual);
                     //map.printL();
                 }

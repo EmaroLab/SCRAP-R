@@ -61,12 +61,12 @@ namespace Coverage
 
 
             //Dual ascent test
-            Map m = new Map(15, 15, 1);
+            Map m = new Map(50, 5, 1);
             m.addObstacle(1, 1);
-           // m.addObstacle(3, 2);
-           // m.addObstacle(2, 1);
+            m.addObstacle(3, 2);
+            m.addObstacle(2, 1);
             m.addObstacle(1, 0);
-            //m.addObstacle(1, 2);
+            m.addObstacle(1, 2);
             m.init();
             var asc = new DualAscent(m,3);
             //m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
