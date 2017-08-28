@@ -10,12 +10,6 @@ namespace Coverage
             public static double vehicleAction = 2;
             public static double alpha = 0;
 
-            //Reference to Map
-            Map map;
-            void setMap(Map m){
-                map = m;
-            }
-
             public static double euclideanDist(NavNode s, NavNode t){
                 double sqrSum = Math.Pow(t.yCoord - s.yCoord, 2) + Math.Pow(t.xCoord - s.xCoord, 2);
                 return Math.Sqrt(sqrSum);
@@ -59,11 +53,6 @@ namespace Coverage
 
         }
 
-        public  class ObstacleFunc
-        {
-
-        }
-
         public class NavNode : Node {
 
             public double xCoord { get ; set; }
@@ -93,9 +82,10 @@ namespace Coverage
 
             public int rows { get; }
             public int cols { get; }
+            //Distance between cells centers
             double resolution;
-            //False when obstacle is present
-            //bool[,] obstMask;
+
+            double[,] fixedWeight;
 
             public double vehicleAction { get; set; }
 
@@ -106,26 +96,16 @@ namespace Coverage
                 this.cols = cols;
                 resolution = res;
                 vehicleAction = CostFunctions.vehicleAction;
-                /*
-                //Init obstacles mask
-                obstMask = new bool[rows, cols];
-				for (int i = 0; i < rows; i++)
-				{
-					for (int j = 0; j < cols; j++)
-					{
-						obstMask[i, j] = true;
-
-					}
-				}
-                */
+                fixedWeight = new double[rows, cols];
                 //Fill the node list
                 generateNodes();
             }
 
             public override void init(){
-				//Generate weight matrix as Dijkstra input
+				//Generate weight matrix as Dijkstra input, initialize links and keep a comm cost copy
 				initLinks();
 				computeWeights();
+                fixedWeight = (double[,])w_matrix.Clone();
             }
 
             void generateNodes()
@@ -161,17 +141,14 @@ namespace Coverage
                 {
                     if (item is NavNode && item.isActive)
 					{
-
-
+                        
                         //Find max y and x respect to vehicle action
-                        int maxX;
-                        int maxY;
 
                         double xMaxCoord = ((NavNode)item).xCoord + vehicleAction;
                         double yMaxCoord = ((NavNode)item).yCoord + vehicleAction;
 
-                        maxX = getCellFromCoord(xMaxCoord, yMaxCoord)[0];
-                        maxY = getCellFromCoord(xMaxCoord, yMaxCoord)[1];
+                        int maxX = getCellFromCoord(xMaxCoord, yMaxCoord)[0];
+                        int maxY = getCellFromCoord(xMaxCoord, yMaxCoord)[1];
 
 						//Find min y and x respect to vehicle action
 						int minX;
@@ -198,7 +175,6 @@ namespace Coverage
                             for (int j = minY; j <= maxY; j++)
                             {
                                 //Find attachable nodes
-
                                 NavNode target = (NavNode)getNodeByID(getNodeIdFromCell(i, j));
                                 double euclDistToTarget = CostFunctions.euclideanDist((NavNode)item, target);
                                 bool check = ((item.getId() != target.getId()) && (target.isActive) && ((euclDistToTarget <= vehicleAction)));
@@ -233,7 +209,7 @@ namespace Coverage
                         foreach (var link in node.links)
                         {
                             NavNode target = (NavNode)link.getAdj();
-                            double comm = CostFunctions.commCost((NavNode)node, target, resolution, rows, cols, nodes);
+                            double comm = fixedWeight[node.getId(), target.getId()];
                             var newWeight = comm + target.nvisited + alpha;
                             link.setWeight(newWeight);
                            
@@ -274,7 +250,8 @@ namespace Coverage
                 return t;
 
 			}
-			public static int[] getCellFromCoord(double xCoord, double yCoord,double resolution ,int rows,int cols)
+            //Static version for external usage
+			public static int[] getCellFromCoord(double xCoord, double yCoord,double resolution,int rows,int cols)
 			{
 
 				var t = new int[2];

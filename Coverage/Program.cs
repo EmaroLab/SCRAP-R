@@ -9,6 +9,7 @@ namespace Coverage
         public static void Main(string[] args)
         {
 
+            //You can create an arbitrary graph
             Graph g = new Graph();
             Node n0 = new Node(0);
             Node n1 = new Node(1);
@@ -19,7 +20,7 @@ namespace Coverage
             Node n6 = new Node(6);
             Node n7 = new Node(7);
 
-
+            //Add nodes to it
             g.nodes.Add(n0);
             g.nodes.Add(n1);
             g.nodes.Add(n2);
@@ -40,7 +41,7 @@ namespace Coverage
 
              Console.WriteLine("list size: " + g.nodes.Count);
  */
-
+            //You can directly provide a weight matrix instead
             double[,] L ={
                 {-1,  5, -1, -1, -1,  3, -1, -1},
                 { 5, -1,  2, -1, -1, -1,  3, -1},
@@ -51,17 +52,20 @@ namespace Coverage
                 {-1,  3, -1, -1, -1,  7, -1,  2},
                 {-1, -1, 10, -1,  5, -1,  2, -1}
             };
-            // d.Run();
+
+            //Init must be called once before operations
             g.init();
 
-            g.computeWeights(L, 8);
-            //g.printL();
-            g.getShortestPath(0, 0);
+            //This generates nodes structure from matrix. Otherwise you can use computeWeights(); if you provided nodes; this will create the weight matrix
+			g.computeWeights(L, 8);
+
+
+            g.getShortestPath(0, 2);
 
 
 
             //Dual ascent test
-            Map m = new Map(50, 5, 1);
+            Map m = new Map(50, 50, 1);
             m.addObstacle(1, 1);
             m.addObstacle(3, 2);
             m.addObstacle(2, 1);
@@ -72,7 +76,7 @@ namespace Coverage
             //m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
             var s = new int[2];
             s[0] = 0;
-            s[1] = 0;
+            s[1] = 1;
 			var t = new int[2];
             t[0] = 4;
             t[1] = 0;

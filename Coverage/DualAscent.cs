@@ -22,6 +22,11 @@ namespace Coverage
             public void setNVehicles(int n){
                 n_vehicles = n;
             }
+			public void reset()
+			{
+                alpha_actual = 0;
+				eps_min = Double.MaxValue;
+			}
             //Checks if current link is in a general path
             bool isLinkInPath(LinkedList<Node> path, Link link){
 
@@ -65,6 +70,7 @@ namespace Coverage
                 //Init stuctures
                 var qy = new double[map.getNumVert(),2];
                 bool done = false;
+                var alpha_prev = alpha_actual;
                 var path = new LinkedList<Node>();
                 path = map.getShortestPath(source_id, target_id);
 				if (path.Count - 2 <= n_vehicles)
@@ -90,7 +96,6 @@ namespace Coverage
                         done = true;
                         break;
                     }
-                    Console.WriteLine(done);
                     foreach (var item in path)
 					{
 						Console.WriteLine(item.getId());
@@ -118,7 +123,7 @@ namespace Coverage
                         foreach (var link in node.links)
                         {
                             
-                            if (!isLinkInPath(path, link) || true)
+                            if (!isLinkInPath(path, link) )
                             {
                                 int n = node.getId();
                                 int n_p = link.getAdj().getId();
@@ -132,13 +137,9 @@ namespace Coverage
                                 {
                                     shorterPathFound = true;
                                     double eps = (qy[n, 1] + link.getWeight() - qy[n_p, 1]) / (qy[n_p, 0] - (qy[n, 0] + 1));
-                                    Console.WriteLine(eps < eps_min && eps > 0);
-                                    if (eps < eps_min  && eps > 0.00001) //Magic number, avoid to get stuck with eps very low
+                                    if (eps < eps_min  && eps > 0.001) //Magic number, avoid to get stuck with eps very low
                                         eps_min = eps;
-                                    Console.WriteLine("eps: " + eps + " EpsMin: " + eps_min);
-                             
-                                        
-                                    
+                           
                                 }
                             }
                         }
@@ -153,9 +154,10 @@ namespace Coverage
                         return path;
 
                     }
-                  
-                    alpha_actual += eps_min;
 
+                    alpha_actual += eps_min;
+                    Console.WriteLine("alpha: " + alpha_actual + " EpsMin: " + eps_min);
+                    alpha_prev = alpha_actual;
                     map.updateWeights(alpha_actual);
                     //map.printL();
                 }
