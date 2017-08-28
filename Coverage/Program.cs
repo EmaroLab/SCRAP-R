@@ -59,10 +59,8 @@ namespace Coverage
             //This generates nodes structure from matrix. Otherwise you can use computeWeights(); if you provided nodes; this will create the weight matrix
 			g.computeWeights(L, 8);
 
-
-            g.getShortestPath(0, 2);
-
-
+            //Return a linked list with the shortest path
+            var path = g.getShortestPath(0, 2);
 
             //Dual ascent test
             Map m = new Map(50, 50, 1);
@@ -71,9 +69,9 @@ namespace Coverage
             m.addObstacle(2, 1);
             m.addObstacle(1, 0);
             m.addObstacle(1, 2);
+            //Init must be called after adding obstacles
             m.init();
             var asc = new DualAscent(m,3);
-            //m.getShortestPath(0 , m.getNodeIdFromCell(29,15));
             var s = new int[2];
             s[0] = 0;
             s[1] = 1;
@@ -106,17 +104,7 @@ namespace Coverage
 				}
                 Console.WriteLine("");
 			}
-            /*
-			m.printL();
-			for (int r = 0; r < m.rows; r++)
-			{
-				for (int c = 0; c < m.cols; c++)
-				{
-                    Console.Write(m.getNodeByID(m.getNodeIdFromCell(r,c)).distFromSource + " ");
-				}
-				Console.WriteLine("");
-			}
-*/
+
         }
     }
 }

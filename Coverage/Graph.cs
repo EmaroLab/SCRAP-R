@@ -290,12 +290,7 @@ namespace Coverage
                             nodes[i].distFromSource = dist[i, 0];
                             nodes[i].prevNode = (int)dist[i, 1];
                     }
-                    /*
-                    for (int i = 0; i < num_vert; i++)
-                    {
-                        Console.WriteLine(dist[i, 0] + " " + dist[i, 1]);
-                    }
-                    */
+
                     //Traverse the tree
                     path = traverse(source, dest);
                 }
@@ -321,7 +316,6 @@ namespace Coverage
                 return path;
             }
 
-
-            }//CLASS Graph
-        }//NAMESPACE Navigation
-    }//NAMESPACE Coverage
+        }//CLASS Graph
+    }//NAMESPACE Navigation
+}//NAMESPACE Coverage
