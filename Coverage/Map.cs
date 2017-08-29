@@ -212,7 +212,6 @@ namespace Coverage
                             double comm = fixedWeight[node.getId(), target.getId()];
                             var newWeight = comm + target.nvisited + alpha;
                             link.setWeight(newWeight);
-                           
                         }
                     }
                 }

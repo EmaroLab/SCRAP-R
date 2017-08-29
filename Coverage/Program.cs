@@ -1,11 +1,39 @@
 ﻿using System;
-
+using System.Collections.Generic;
 
 namespace Coverage
 {
     using Navigation;
     class MainClass
     {
+        public static void printMap(Map m, LinkedList<Node> p)
+        {
+			//Print map
+			var stamp = new int[m.rows, m.cols];
+			for (int r = 0; r < m.rows; r++)
+			{
+				for (int c = 0; c < m.cols; c++)
+				{
+					stamp[r, c] = 0;
+					if (!m.getNodeByID(m.getNodeIdFromCell(r, c)).isActive)
+						stamp[r, c] = 9;
+
+				}
+			}
+			foreach (NavNode item in p)
+			{
+				stamp[item.xCell, item.yCell] = 1;
+			}
+			for (int r = 0; r < m.rows; r++)
+			{
+				for (int c = 0; c < m.cols; c++)
+				{
+					Console.Write(stamp[r, c] + " ");
+				}
+				Console.WriteLine("");
+			}
+        }
+
         public static void Main(string[] args)
         {
 
@@ -63,7 +91,7 @@ namespace Coverage
             var path = g.getShortestPath(0, 2);
 
             //Dual ascent test
-            Map m = new Map(50, 50, 1);
+            Map m = new Map(30, 30, 1);
             m.addObstacle(1, 1);
             m.addObstacle(3, 2);
             m.addObstacle(2, 1);
@@ -81,29 +109,11 @@ namespace Coverage
             var p = asc.run(m.getNodeIdFromCell(s[0], s[1]), m.getNodeIdFromCell(t[0], t[1]));
 
             //Print map
-            var stamp = new int[m.rows, m.cols];
-            for (int r = 0; r < m.rows; r++)
-            {
-                for (int c = 0; c < m.cols; c++)
-                {
-                    stamp[r, c] = 0;
-                    if(!m.getNodeByID(m.getNodeIdFromCell(r,c)).isActive)
-                        stamp[r, c] = 9;
-                        
-                }
-            }
-			foreach (NavNode item in p)
-			{
-                stamp[item.xCell, item.yCell] = 1;
-			}
-			for (int r = 0; r < m.rows; r++)
-			{
-				for (int c = 0; c < m.cols; c++)
-				{
-                    Console.Write(stamp[r, c] + " " );
-				}
-                Console.WriteLine("");
-			}
+            printMap(m, p);
+            Console.WriteLine("*******************************");
+            asc.reset();
+            p = asc.run(m.getNodeIdFromCell(s[0], 0), m.getNodeIdFromCell(t[0], t[1]));
+            printMap(m, p);
 
         }
     }

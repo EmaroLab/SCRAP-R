@@ -26,6 +26,7 @@ namespace Coverage
 			{
                 alpha_actual = 0;
 				eps_min = Double.MaxValue;
+                map.updateWeights();
 			}
             //Checks if current link is in a general path
             bool isLinkInPath(LinkedList<Node> path, Link link){
@@ -122,25 +123,20 @@ namespace Coverage
                     {
                         foreach (var link in node.links)
                         {
-                            
-                            if (!isLinkInPath(path, link) )
-                            {
-                                int n = node.getId();
-                                int n_p = link.getAdj().getId();
-                                //q_n [n'] > q_n[n] + 1
-                                //Debug
-                                double qnp = qy[n_p, 0];
-                                double qn = qy[n, 0];
-                                bool check = qnp > qn + 1;
+                            int n = node.getId();
+                            int n_p = link.getAdj().getId();
+                            //q_n [n'] > q_n[n] + 1
+                            //Debug
+                            double qnp = qy[n_p, 0];
+                            double qn = qy[n, 0];
+                            bool check = qnp > qn + 1;
 
-                                if (check)
-                                {
-                                    shorterPathFound = true;
-                                    double eps = (qy[n, 1] + link.getWeight() - qy[n_p, 1]) / (qy[n_p, 0] - (qy[n, 0] + 1));
-                                    if (eps < eps_min  && eps > 0.001) //Magic number, avoid to get stuck with eps very low
-                                        eps_min = eps;
-                           
-                                }
+                            if (check)
+                            {
+                                shorterPathFound = true;
+                                double eps = (qy[n, 1] + link.getWeight() - qy[n_p, 1]) / (qy[n_p, 0] - (qy[n, 0] + 1));
+                                if (eps < eps_min  && eps > 0.001) //Magic number, avoid to get stuck with eps very low
+                                    eps_min = eps;
                             }
                         }
                     }
